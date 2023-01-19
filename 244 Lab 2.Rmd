@@ -111,9 +111,58 @@ rmse_predict_test <-predict_test %>%
 view(rmse_predict_test)
 # model 2 has the lowest value, therefore would be the closest fit
 
+#therefore how would we do this for all 10 of our folds, could be tedious
+
 ```
 
+# Lets iterate!
+```{r}
+rmse_df <- data.frame()
 
+#assign it to a variable i, for every list in i it will go through everything in the {} for every list
+for(i in 1:folds) {
+  ### i <- 1
+  kfold_test_df <- penguins_fold %>% 
+    filter(group == i)
+  kfold_train_df <- penguins_fold %>% 
+    filter(group != i)
+  
+  kfold_mdl1 <- lm(f1, data = kfold_train_df)
+  kfold_mdl2 <- lm(f2, data = kfold_train_df)
+  kfold_mdl3 <- lm(f3, data = kfold_train_df)
+  
+  kfold_pred_df <- kfold_test_df %>% 
+    mutate(mdl1 = predict(kfold_mdl1, .), 
+           mdl2 = predict(kfold_mdl2, .), 
+           mdl3 = predict(kfold_mdl3, .))
+  
+  kfold_rmse_df <- kfold_pred_df %>% 
+    summarise(rmse_mdl1 = calc_rmse(mdl1, mass), 
+              rmse_mdl2 = calc_rmse(mdl2, mass),
+              rmse_mdl3 = calc_rmse(mdl3, mass),
+              test_gp = i)
+  
+  rmse_df <- bind_rows(rmse_df, kfold_rmse_df)
+}
+
+#the period means use the same data frame as called out above
+
+rmse_df %>% 
+  summarize(mean_rmse_mdl1 = mean(rmse_mdl1),
+            mean_rmse_mdl2 = mean(rmse_mdl2),
+            mean_rmse_mdl3 = mean(rmse_mdl3))
+```
+# Finalize the model
+
+```{r}
+final_mdl <- lm(f2, data = penguins_clean)
+```
+
+Our final model:
+`r equatiomatic::extract_eq(final_mdl, wrap = TRUE)`
+
+And with coefficients:
+`r equatiomatic::extract_eq(final_mdl, wrap = TRUE, use_coefs = TRUE)`
 
 
 
