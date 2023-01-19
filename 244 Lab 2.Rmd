@@ -1,0 +1,72 @@
+---
+title: "ESM 244 Lab 2"
+author: "Danielle Hoekstra"
+date: "2023-01-19"
+output: html_document
+---
+
+```{r setup, warning = FALSE, echo = TRUE, message = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(palmerpenguins)
+library(AICcmodavg)
+library(equatiomatic)
+```
+
+# Predicting penguin mass
+```{r}
+
+penguins_clean <- penguins %>% 
+  drop_na() %>% 
+  rename(mass = body_mass_g,
+         bill_l = bill_length_mm,
+         bill_d = bill_depth_mm,
+         flip_l = flipper_length_mm)
+
+mdl1 <- lm(mass ~ bill_l + bill_d + flip_l + species + sex + island, 
+           data = penguins_clean)
+
+##to see how good your model is use summary(mdl1), get the coefficients 
+```
+
+```{r}
+f1 <- mass ~ bill_l + bill_d + flip_l + species + sex + island #R will create this as a formula, can plug in f1 as a substitution and clean it up
+
+mdl1 = lm(f1, data = penguins_clean)
+
+f2 <- mass ~ bill_l + bill_d + flip_l + species + sex
+
+mdl2 = lm(f2, data = penguins_clean)
+
+AIC(mdl1, mdl2) # how many degrees of freedom and then AIC, AIC is lower in mdl2 but barely, still predicts as well
+
+f3 <- mass ~ bill_d + flip_l + species + sex
+
+mdl3 <- lm(f3, data = penguins_clean)
+
+AIC(mdl1, mdl2, mdl3) # predictive power has gotten worse in mdl3 because the AIC is higher
+
+BIC(mdl1, mdl2, mdl3) # mdl3 is actually closer to model 2, BIC rewards parsimony more strongly
+
+AICcmodavg::AICc(mdl1) # the AICcmodavg:: reminder that the next function is coming from that package
+
+aictab(list(mdl1, mdl2, mdl3))
+bictab(list(mdl1, mdl2, mdl3)) 
+
+#this is one way to create a linear model and decide if you should include a variable or which ones you should drop out
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
