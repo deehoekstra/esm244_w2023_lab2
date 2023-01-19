@@ -57,6 +57,62 @@ bictab(list(mdl1, mdl2, mdl3))
 #this is one way to create a linear model and decide if you should include a variable or which ones you should drop out
 ```
 
+# Compare models using k-fold validation
+```{r}
+folds <- 10 #take our dataset and break it into 10 chunks, set aside one of those chunks and then test it against what we have set aside
+fold_vec <- rep(1:folds, length.out = nrow(penguins_clean))
+
+set.seed(42) #to shuffle
+penguins_fold <- penguins_clean %>% 
+  mutate(group = sample(fold_vec, size = n(), replace = FALSE))
+
+table(penguins_fold$group) #how many observations are in each group, check for even
+
+test_df <- penguins_fold %>% 
+  filter(group ==1)
+
+train_df <- penguins_fold %>% 
+  filter(group != 1)
+```
+
+```{r}
+## calc_mean <- function(x) {m <- sum(x) / length(x)} example of what we are doing
+
+calc_rmse <- function(x, y) {
+  rmse <- (x - y)^2 %>% 
+    mean() %>% 
+    sqrt()
+  return(rmse)
+}
+```
+
+```{r}
+#use the training data frame, not the entire penguins clean
+training_mdl1 <- lm(f1, data = train_df) #based on this smaller set, heres how we would predict the mass using the variables in f1
+training_mdl2 <- lm(f2, data = train_df)
+
+training_mdl3 <- lm(f3, data = train_df)
+
+#see how well these predict models in the test value frame
+predict_test <- test_df %>% mutate(model1 = predict(training_mdl1, test_df), 
+                                   model2 = predict(training_mdl2, test_df), 
+                                   model3 = predict(training_mdl3, test_df)) 
+view(predict_test)
+#predict the masses from training body mass how well they match the test data frame
+#error will be the difference between these two values which is the rmse value
+
+rmse_predict_test <-predict_test %>% 
+  summarize(rmse_mdl1 = calc_rmse(model1, mass),
+            rmse_mdl2 = calc_rmse(model2, mass), 
+            rmse_mdl3 = calc_rmse(model3, mass)) 
+
+#take model 1 column, and subtract the known mass and square all of the differences (so the larger differences are more highly penalized, rmse 'root means square error') or whichever model you are using
+
+view(rmse_predict_test)
+# model 2 has the lowest value, therefore would be the closest fit
+
+```
+
 
 
 
